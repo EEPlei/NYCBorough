@@ -1,0 +1,19 @@
+---
+title: Homework 3
+author: Duke Dinosaurs Team 4
+date: "October 24, 2015"
+output: html_document
+---
+1. Cleaning Data 
+Since we have such a large dataset, we begin by learning some things about our data. Then, we can begin cleaning the data, so we have accurate data to work with. 
+Let's take a look at what kind of information our data tells us.     
+
+We can begin by subsetting out the two Street Intersection Columns.    
+`test1 <- which(nyc.important$Intersection.Street.1 != "")`    
+`test2 <- which(nyc.important$Intersection.Street.2 != "")`    
+`> length(test1)`     
+`[1] 1817002`     
+`> length(test2)`     
+`[1] 1816062`     
+
+
