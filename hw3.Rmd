@@ -7,13 +7,54 @@ output: html_document
 1. Cleaning Data 
 Since we have such a large dataset, we begin by learning some things about our data. Then, we can begin cleaning the data, so we have accurate data to work with. 
 Let's take a look at what kind of information our data tells us.     
+`colnames(nyc)`
+We'll get back the folowing results       
+ [1] "Unique.Key"                     "Created.Date"                  
+ [3] "Closed.Date"                    "Agency"                        
+ [5] "Agency.Name"                    "Complaint.Type"                
+ [7] "Descriptor"                     "Location.Type"                 
+ [9] "Incident.Zip"                   "Incident.Address"              
+[11] "Street.Name"                    "Cross.Street.1"                
+[13] "Cross.Street.2"                 "Intersection.Street.1"         
+[15] "Intersection.Street.2"          "Address.Type"                  
+[17] "City"                           "Landmark"                      
+[19] "Facility.Type"                  "Status"                        
+[21] "Due.Date"                       "Resolution.Description"        
+[23] "Resolution.Action.Updated.Date" "Community.Board"               
+[25] "Borough"                        "Park.Facility.Name"            
+[27] "Park.Borough"                   "School.Name"                   
+[29] "School.Number"                  "School.Region"                 
+[31] "School.Code"                    "School.Phone.Number"           
+[33] "School.Address"                 "School.City"                   
+[35] "School.State"                   "School.Zip"                    
+[37] "School.Not.Found"               "School.or.Citywide.Complaint"  
+[39] "Vehicle.Type"                   "Taxi.Company.Borough"          
+[41] "Taxi.Pick.Up.Location"          "Bridge.Highway.Name"           
+[43] "Bridge.Highway.Direction"       "Road.Ramp"                     
+[45] "Bridge.Highway.Segment"         "Garage.Lot.Name"               
+[47] "Ferry.Direction"                "Ferry.Terminal.Name"   
+Since some of these aren't important, we'll subset our `nyc` data to just the following fourteen variables.
+```{r}
+nyc.important <- nyc[,c("Unique.Key", "Complaint.Type", "Descriptor", "Incident.Zip", 
+"Incident.Address", "Street.Name", "Cross.Street.1", "Cross.Street.2", "Intersection.Street
+.1", "Intersection.Street.2", "Address.Type", "City", "Resolution.Description", "Borough")]
+```
 
 We can begin by subsetting out the two Street Intersection Columns.    
-`test1 <- which(nyc.important$Intersection.Street.1 != "")`    
-`test2 <- which(nyc.important$Intersection.Street.2 != "")`    
-`> length(test1)`     
+`test1 <- nyc.important$Intersection.Street.1 != ""`    
+`test2 <- nyc.important$Intersection.Street.2 != ""`    
+`> length(which(test1))`     
 `[1] 1817002`     
-`> length(test2)`     
+`> length(which(test2))`     
 `[1] 1816062`     
+So we can see that there exists cases where Intersection.Street.1 has data but Intersetion.Street.2 does not. This may also be true vice-versa. 
+```{r}
+nyc.important.2 <- nyc.important[which(nyc.important$Intersection.Street.1 != ""),]
+nyc.important.2 <- nyc.important.2[which(nyc.important.2$Intersection.Street.2 != ""),]
+```
+nyc.important.2 should only have the rows where Intersection.Street.1 and Intersection.Street.2 has data. 
+```{r}
+nyc.important.3 <- nyc.important.2[which(nyc.important.2$Cross.Street.1 != ""),]
+```
 
 
