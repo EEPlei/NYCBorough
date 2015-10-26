@@ -10,6 +10,7 @@ First obtain the data using the following code.
 library(dplyr)
 library(data.table)
 library(magrittr)
+library(stringr)
 nyc = fread("/home/vis/cr173/Sta523/data/nyc/nyc_311.csv") %>% tbl_df()
 ```
 
@@ -82,5 +83,17 @@ nyc3 <- bind_rows(nyc1.1, nyc2.1)
 filter1 <- (nyc3$Intersection.Street.1 != "" & nyc3$Intersection.Street.2 != "" & nyc3$Cross.Street.1 != "" & nyc3$Cross.Street.2 != "")
 nyc4 <- filter(nyc3, !filter1)
 ```
-`filter1` selects all data points where any of the four columns are empty. In other words, filter1 will select all data points where all four columns are full. 
+`filter1` selects all data points where any of the four columns are empty. In other words, filter1 will select all data points where all four columns are full.    
+`> unique(nyc4$Borough)`
+`"MANHATTAN"`     `"BRONX"         "BROOKLYN"      "QUEENS"        "STATEN ISLAND" `"Unspecified" `
+```{r}
+nyc5 <- filter(nyc4, Borough != "Unspecified")
+```
+Find all city names that has "new" in any combination of upper and lower case. 
+```{r}
+new_indices <- which(str_detect(tolower(unique(nyc$City)), "new"))
+york_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "york"))
+yok_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "yok"))
+names <- c(unique(nyc$City)[new_indices][york_indices],unique(nyc$City)[new_indices][yok_indices] )
+```
 
