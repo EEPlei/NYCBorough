@@ -56,5 +56,9 @@ nyc.important.2 should only have the rows where Intersection.Street.1 and Inters
 ```{r}
 nyc.important.3 <- nyc.important.2[which(nyc.important.2$Cross.Street.1 != ""),]
 ```
+Take out all data points where the Cross Street Columns and the Intersection Street Columns are empty. There is no location data for these calls and are useless to us for our purpose.  
+```{r}
+nyc3 <- filter(nyc.important, Cross.Street.1 != "" & Cross.Street.2 != "" & Intersection.Street.1 != "" & Intersection.Street.2 != "" )
+```
 
 
