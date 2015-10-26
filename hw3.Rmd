@@ -5,6 +5,14 @@ date: "October 24, 2015"
 output: html_document
 ---
 1. Cleaning Data 
+First obtain the data using the following code. 
+```{r}
+library(dplyr)
+library(data.table)
+library(magrittr)
+nyc = fread("/home/vis/cr173/Sta523/data/nyc/nyc_311.csv") %>% tbl_df()
+```
+
 Since we have such a large dataset, we begin by learning some things about our data. Then, we can begin cleaning the data, so we have accurate data to work with. 
 Let's take a look at what kind of information our data tells us.     
 `colnames(nyc)`
@@ -35,9 +43,19 @@ We'll get back the folowing results
 [47] "Ferry.Direction"                "Ferry.Terminal.Name"   
 Since some of these aren't important, we'll subset our `nyc` data to just the following fourteen variables.
 ```{r}
-nyc.important <- nyc[,c("Unique.Key", "Complaint.Type", "Descriptor", "Incident.Zip", 
-"Incident.Address", "Street.Name", "Cross.Street.1", "Cross.Street.2", "Intersection.Street
-.1", "Intersection.Street.2", "Address.Type", "City", "Resolution.Description", "Borough")]
+nyc.important <- nyc[,c("Unique.Key",
+                        "Complaint.Type",
+                        "Descriptor",
+                        "Incident.Zip",
+                        "Incident.Address",
+                        "Street.Name",
+                        "Cross.Street.1",
+                        "Cross.Street.2",
+                        "Intersection.Street.1",
+                        "Intersection.Street.2",
+                        "Address.Type",
+                        "City",
+                        "Resolution.Description", "Borough")]
 ```
 
 We can begin by subsetting out the two Street Intersection Columns.    
@@ -49,16 +67,18 @@ We can begin by subsetting out the two Street Intersection Columns.
 `[1] 1816062`     
 So we can see that there exists cases where Intersection.Street.1 has data but Intersetion.Street.2 does not. This may also be true vice-versa. 
 ```{r}
-nyc.important.2 <- nyc.important[which(nyc.important$Intersection.Street.1 != ""),]
-nyc.important.2 <- nyc.important.2[which(nyc.important.2$Intersection.Street.2 != ""),]
+nyc1 <- filter(nyc.important, Cross.Street.1 != "" & Cross.Street.2 != "")
 ```
-nyc.important.2 should only have the rows where Intersection.Street.1 and Intersection.Street.2 has data. 
+Find all the data where both Cross Street Columns are filled. 
 ```{r}
-nyc.important.3 <- nyc.important.2[which(nyc.important.2$Cross.Street.1 != ""),]
+nyc2 <- filter(nyc.important, Intersection.Street.1 != "" & Intersection.Street.2 != "")
 ```
-Take out all data points where the Cross Street Columns and the Intersection Street Columns are empty. There is no location data for these calls and are useless to us for our purpose.  
+Find all the data where both Intersection Street Columns are filled.    
+Now we have two subsets of our `nyc.important` data frame. We've thrown away the data where there isn't enough information. Now, we consider the possibility that there may be too much information. In this case, it would be the data where there is information for both Cross Street Columns as well as (both Intersection Street Columns. We can bind `nyc1` and `nyc2` together and throw away the data points where we have both cross and intersection information.    
 ```{r}
-nyc3 <- filter(nyc.important, Cross.Street.1 != "" & Cross.Street.2 != "" & Intersection.Street.1 != "" & Intersection.Street.2 != "" )
+nyc3 <- bind_rows(nyc1, nyc2)
+filter1 <- (nyc3$Intersection.Street.1 != "" & nyc3$Intersection.Street.2 != "" & nyc3$Cross.Street.1 != "" & nyc3$Cross.Street.2 != "")
+nyc4 <- filter(nyc3, !filter1)
 ```
-
+`filter1` selects all data points where any of the four columns are empty. In other words, filter1 will select all data points where all four columns are full. 
 
