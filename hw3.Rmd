@@ -68,15 +68,17 @@ We can begin by subsetting out the two Street Intersection Columns.
 So we can see that there exists cases where Intersection.Street.1 has data but Intersetion.Street.2 does not. This may also be true vice-versa. 
 ```{r}
 nyc1 <- filter(nyc.important, Cross.Street.1 != "" & Cross.Street.2 != "")
+nyc1.1 <- filter(nyc1, Intersection.Street.1 == "" & Intersection.Street.2 == "")
 ```
 Find all the data where both Cross Street Columns are filled. 
 ```{r}
 nyc2 <- filter(nyc.important, Intersection.Street.1 != "" & Intersection.Street.2 != "")
+nyc2.1 <- filter(nyc2, Cross.Street.1 == "" & Cross.Street.2 == "")
 ```
 Find all the data where both Intersection Street Columns are filled.    
 Now we have two subsets of our `nyc.important` data frame. We've thrown away the data where there isn't enough information. Now, we consider the possibility that there may be too much information. In this case, it would be the data where there is information for both Cross Street Columns as well as (both Intersection Street Columns. We can bind `nyc1` and `nyc2` together and throw away the data points where we have both cross and intersection information.    
 ```{r}
-nyc3 <- bind_rows(nyc1, nyc2)
+nyc3 <- bind_rows(nyc1.1, nyc2.1)
 filter1 <- (nyc3$Intersection.Street.1 != "" & nyc3$Intersection.Street.2 != "" & nyc3$Cross.Street.1 != "" & nyc3$Cross.Street.2 != "")
 nyc4 <- filter(nyc3, !filter1)
 ```
