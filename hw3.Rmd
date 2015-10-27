@@ -89,11 +89,17 @@ nyc4 <- filter(nyc3, !filter1)
 ```{r}
 nyc5 <- filter(nyc4, Borough != "Unspecified")
 ```
-Find all city names that has "new" in any combination of upper and lower case. 
+Find all city names that has "new" in any combination of upper and lower case. Find all city names that has some variation of "york" in it. Note, we know that there is the variation "yok" because we saw it when looking at `sort(unique(nyc$City))`. It is entirely possible that we missed a variation of New York, but this is our best attempt. 
 ```{r}
 new_indices <- which(str_detect(tolower(unique(nyc$City)), "new"))
 york_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "york"))
 yok_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "yok"))
-names <- c(unique(nyc$City)[new_indices][york_indices],unique(nyc$City)[new_indices][yok_indices] )
+names.okay <- c(unique(nyc$City)[new_indices][york_indices],unique(nyc$City)[new_indices][yok_indices] )
+nyc6 <- filter(nyc5, City %in% names.okay)
+```
+Remove all BLOCKFACE Address Types. 
+```{r}
+nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
+
 ```
 
