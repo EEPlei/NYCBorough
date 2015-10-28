@@ -4,102 +4,80 @@ author: Duke Dinosaurs Team 4
 date: "October 24, 2015"
 output: html_document
 ---
-1. Cleaning Data 
-First obtain the data using the following code. 
-```{r}
-library(dplyr)
-library(data.table)
-library(magrittr)
-library(stringr)
-nyc = fread("/home/vis/cr173/Sta523/data/nyc/nyc_311.csv") %>% tbl_df()
-```
-
+##Geocoding##
+First obtain the data using the following code `fread() %>% tbl_df()`
 Since we have such a large dataset, we begin by learning some things about our data. Then, we can begin cleaning the data, so we have accurate data to work with. 
 Let's take a look at what kind of information our data tells us.     
 `colnames(nyc)`
 We'll get back the folowing results       
- [1] "Unique.Key"                     "Created.Date"                  
- [3] "Closed.Date"                    "Agency"                        
- [5] "Agency.Name"                    "Complaint.Type"                
- [7] "Descriptor"                     "Location.Type"                 
- [9] "Incident.Zip"                   "Incident.Address"              
-[11] "Street.Name"                    "Cross.Street.1"                
-[13] "Cross.Street.2"                 "Intersection.Street.1"         
-[15] "Intersection.Street.2"          "Address.Type"                  
-[17] "City"                           "Landmark"                      
-[19] "Facility.Type"                  "Status"                        
-[21] "Due.Date"                       "Resolution.Description"        
-[23] "Resolution.Action.Updated.Date" "Community.Board"               
-[25] "Borough"                        "Park.Facility.Name"            
-[27] "Park.Borough"                   "School.Name"                   
-[29] "School.Number"                  "School.Region"                 
-[31] "School.Code"                    "School.Phone.Number"           
-[33] "School.Address"                 "School.City"                   
-[35] "School.State"                   "School.Zip"                    
-[37] "School.Not.Found"               "School.or.Citywide.Complaint"  
-[39] "Vehicle.Type"                   "Taxi.Company.Borough"          
-[41] "Taxi.Pick.Up.Location"          "Bridge.Highway.Name"           
-[43] "Bridge.Highway.Direction"       "Road.Ramp"                     
-[45] "Bridge.Highway.Segment"         "Garage.Lot.Name"               
-[47] "Ferry.Direction"                "Ferry.Terminal.Name"   
+ ` "Unique.Key"                     "Created.Date"`                  
+ ` "Closed.Date"                    "Agency"`                        
+ ` "Agency.Name"                    "Complaint.Type"`                
+ ` "Descriptor"                     "Location.Type"`                 
+ ` "Incident.Zip"                   "Incident.Address"`              
+ ` "Street.Name"                    "Cross.Street.1"`                
+ ` "Cross.Street.2"                 "Intersection.Street.1"`         
+ ` "Intersection.Street.2"          "Address.Type"`                  
+ ` "City"                           "Landmark"`                      
+ ` "Facility.Type"                  "Status"`                        
+ ` "Due.Date"                       "Resolution.Description"`        
+ ` "Resolution.Action.Updated.Date" "Community.Board"`               
+ ` "Borough"                        "Park.Facility.Name"`            
+ ` "Park.Borough"                   "School.Name"`                   
+ ` "School.Number"                  "School.Region"`                 
+ ` "School.Code"                    "School.Phone.Number"`           
+ ` "School.Address"                 "School.City"`                   
+ ` "School.State"                   "School.Zip"`                    
+ ` "School.Not.Found"               "School.or.Citywide.Complaint"`  
+ ` "Vehicle.Type"                   "Taxi.Company.Borough"`          
+ ` "Taxi.Pick.Up.Location"          "Bridge.Highway.Name"`           
+ ` "Bridge.Highway.Direction"       "Road.Ramp"`                    
+ ` "Bridge.Highway.Segment"         "Garage.Lot.Name"`               
+ ` "Ferry.Direction"                "Ferry.Terminal.Name"`   
 Since some of these aren't important, we'll subset our `nyc` data to just the following fourteen variables.
-```{r}
-nyc.important <- nyc[,c("Unique.Key",
-                        "Complaint.Type",
-                        "Descriptor",
-                        "Incident.Zip",
-                        "Incident.Address",
-                        "Street.Name",
-                        "Cross.Street.1",
-                        "Cross.Street.2",
-                        "Intersection.Street.1",
-                        "Intersection.Street.2",
-                        "Address.Type",
-                        "City",
-                        "Resolution.Description", "Borough")]
-```
-
-We can begin by subsetting out the two Street Intersection Columns.    
+                        `"Unique.Key",`         
+                        `"Complaint.Type",`          
+                        `"Descriptor",`            
+                        `"Incident.Zip",`           
+                        `"Incident.Address",`            
+                        `"Street.Name",`              
+                        `"Cross.Street.1",`                   
+                        `"Cross.Street.2",`                     
+                        `"Intersection.Street.1",`                  
+                        `"Intersection.Street.2",`                          
+                        `"Address.Type",`                
+                        `"City",`                      
+                        `"Resolution.Description",`
+                        `"Borough"`               
+            
+We can see that location information is available through two Cross Street columns or two Intersection Street columns. However, we shouldn't assume that all data points will have information in these columns. We should test to see if there exists cases where there are no information.    
 `test1 <- nyc.important$Intersection.Street.1 != ""`    
 `test2 <- nyc.important$Intersection.Street.2 != ""`    
 `> length(which(test1))`     
 `[1] 1817002`     
 `> length(which(test2))`     
 `[1] 1816062`     
-So we can see that there exists cases where Intersection.Street.1 has data but Intersetion.Street.2 does not. This may also be true vice-versa. 
-```{r}
-nyc1 <- filter(nyc.important, Cross.Street.1 != "" & Cross.Street.2 != "")
-nyc1.1 <- filter(nyc1, Intersection.Street.1 == "" & Intersection.Street.2 == "")
-```
-Find all the data where both Cross Street Columns are filled. 
-```{r}
-nyc2 <- filter(nyc.important, Intersection.Street.1 != "" & Intersection.Street.2 != "")
-nyc2.1 <- filter(nyc2, Cross.Street.1 == "" & Cross.Street.2 == "")
-```
+So we can see that there may exist cases where Intersection.Street.1 has data but Intersetion.Street.2 does not. This may also be true vice-versa.    
+The data that we want should either have both Cross Street data or both Intersection Street data. 
+`nyc1` will filter out all nyc data where Cross.Street.1 is not empty and Cross.Street.2 is not empty. Since Intersection.Street.1 or Intersection.Street may also be full at the same time, we'll filter `nyc1` into `nyc1.1` by only taking the data points where both Intersection columns are empty.    
+Similarily, `nyc2` will find all nyc data where Intersection.Street.1 is not empty and Intersection.Street.2 is not empty. `nyc2.1` will further filter the data by finding the ones where both Cross columns are empty. 
+
 Find all the data where both Intersection Street Columns are filled.    
 Now we have two subsets of our `nyc.important` data frame. We've thrown away the data where there isn't enough information. Now, we consider the possibility that there may be too much information. In this case, it would be the data where there is information for both Cross Street Columns as well as (both Intersection Street Columns. We can bind `nyc1` and `nyc2` together and throw away the data points where we have both cross and intersection information.    
-```{r}
-nyc3 <- bind_rows(nyc1.1, nyc2.1)
-filter1 <- (nyc3$Intersection.Street.1 != "" & nyc3$Intersection.Street.2 != "" & nyc3$Cross.Street.1 != "" & nyc3$Cross.Street.2 != "")
-nyc4 <- filter(nyc3, !filter1)
-```
-`filter1` selects all data points where any of the four columns are empty. In other words, filter1 will select all data points where all four columns are full.    
+`nyc3` binds `nyc1.1` and `nyc2.1`. Now we have a data frame where either both Cross Columns are full and both Intersection Columns are empty or both Intersection Columns are full and both Cross Columns are empty.    
+`nyc4` makes sure that all data points has location information 
+Let's now look at the Borough Column.       
 `> unique(nyc4$Borough)`
-`"MANHATTAN"`     `"BRONX"         "BROOKLYN"      "QUEENS"        "STATEN ISLAND" `"Unspecified" `
-```{r}
-nyc5 <- filter(nyc4, Borough != "Unspecified")
-```
-Find all city names that has "new" in any combination of upper and lower case. Find all city names that has some variation of "york" in it. Note, we know that there is the variation "yok" because we saw it when looking at `sort(unique(nyc$City))`. It is entirely possible that we missed a variation of New York, but this is our best attempt. 
-```{r}
-new_indices <- which(str_detect(tolower(unique(nyc$City)), "new"))
-york_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "york"))
-yok_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]), "yok"))
-names.okay <- c(unique(nyc$City)[new_indices][york_indices],unique(nyc$City)[new_indices][yok_indices] )
-nyc6 <- filter(nyc5, City %in% names.okay)
-```
-Remove all BLOCKFACE Address Types. 
-```{r}
-nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
-
-```
-
+`"MANHATTAN"`
+`"BRONX"`         
+`"BROOKLYN"`      
+`"QUEENS"`        
+`"STATEN ISLAND"` 
+`"Unspecified"`
+Since we are only interested in the first five boroughs, `nyc5` will filter out "Unspecified".    
+Find all city names that has "new" in any combination of upper and lower case. Find all city names that has some variation of "york" in it. Note, we know that there is the variation "yok" because we saw it when looking at `sort(unique(nyc$City))`. It is entirely possible that we missed a variation of New York, but this is our best attempt.
+Now we have a vector of names we can assume was meant to be New York City. We can filter out all data points whose City Column entry is not one of those names - `nyc6`.
+By now, we've realized that each data's location data is given to us differently. Looking at the Address.Type column, we can have some idea how the data is presented to us.     
+`> unique(nyc$Address.Type)`    
+`[1] ""  "ADDRESS" "INTERSECTION" "LATLONG" "BLOCKFACE" "PLACENAME"`     
+We only want to work with ""Address", "Intersection", and "Placename". `nyc7` and `nyc7.1` will remove all data whose Address.Type Column isn't that of the three above. 
