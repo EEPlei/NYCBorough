@@ -68,9 +68,7 @@ nyc6 <- filter(nyc5, City %in% names.okay)
 nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
 # remove all rows where Address.Type column is "BLOCKFACE" #
 nyc7.1 <- filter(nyc7, Address.Type != "")
-<<<<<<< HEAD
-# remove all rows where Address.Type column is empty # 
-=======
+
 # remove all rows where Address.Type column is empty #
 
 #load intersections
