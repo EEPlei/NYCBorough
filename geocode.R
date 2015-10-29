@@ -63,4 +63,29 @@ nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
 # remove all rows where Address.Type column is "BLOCKFACE" #
 nyc7.1 <- filter(nyc7, Address.Type != "")
 # remove all rows where Address.Type column is empty # 
-
+transform <- function(v){
+  v <- str_replace_all(v,"AVENUE","AVE") #ATTENTION
+  v <- str_replace_all(v,"STREET","ST")
+  v <- str_replace_all(v,"DRIVE","DR")
+  v <- str_replace_all(v,"BOULEVARD","BLVD")
+  v <- str_replace_all(v,"ROAD","RD")
+  v <- str_replace_all(v,"PLACE","PL")
+  v <- str_replace_all(v,"EXPRESSWAY","EXPY")
+  v <- str_replace_all(v,"PARKWAY","PKWY")
+  v <- str_replace_all(v,"FREEWAY","FWY")
+  v <- str_replace_all(v,"CRESCENT","CRES")
+  v <- str_replace_all(v,"COURT","CT")
+  v <- str_replace_all(v,"LANE","LN")
+  v <- str_replace_all(v,"EAST "," E ")
+  v <- str_replace_all(v,"WEST ","W ")
+  v <- str_replace_all(v,"SOUTH ","S ")
+  v <- str_replace_all(v,"NORTH "," N ")
+  v <- str_replace_all(v," EAST"," E")
+  v <- str_replace_all(v," WEST"," W")
+  v <- str_replace_all(v," SOUTH"," S")
+  v <- str_replace_all(v," NORTH"," N")
+  v <- str_replace_all(v,".* STREET WEST","WEST STREET .*")
+  return(v)
+}
+load("~cr173/Sta523/data/nyc/intersections/intersections.Rdata")
+save(, file = "geocode.Rdata")
