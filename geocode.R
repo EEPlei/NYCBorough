@@ -7,28 +7,24 @@ library(foreign)
 library(data.table)
 library(RSQLite)
 
-#load nyc
-
-base_path <- "~cr173/Sta523/data/nyc/"
-database <- dbConnect(drv=RSQLite::SQLite(), dbname="~cr173/Sta523/data/nyc/nyc_311_index.sqlite")
-tables <- dbListTables(database)
-lDataFrames <- vector("list", length=length(tables))
-
-## create a data.frame for each table
-for (i in seq(along=tables)) {
-  lDataFrames[[i]] <- dbGetQuery(conn=database, statement=paste("SELECT * FROM '", tables[[i]], "'", sep=""))
-}
-
-nyc <- lDataFrames[[1]] 
-
-#clean nyc
-
-nyc1 <- filter(nyc, Cross.Street.1 != "" & Cross.Street.2 != "")
+nyc = fread("/home/vis/cr173/Sta523/data/nyc/nyc_311.csv") %>% tbl_df()
+nyc.important <- nyc[,c("Incident.Zip",
+                        "Incident.Address",
+                        "Street.Name",
+                        "Cross.Street.1",
+                        "Cross.Street.2",
+                        "Intersection.Street.1",
+                        "Intersection.Street.2",
+                        "Address.Type",
+                        "City",
+                        "Borough")]
+nyc1 <- filter(nyc.important, 
+               Cross.Street.1 != "" & Cross.Street.2 != "")
 # both Cross Street Columns are filled #
 nyc1.1 <- filter(nyc1, 
                  Intersection.Street.1 == "" & Intersection.Street.2 == "")
 # both Intersection Street Columns are empty #
-nyc2 <- filter(nyc, 
+nyc2 <- filter(nyc.important, 
                Intersection.Street.1 != "" & Intersection.Street.2 != "")
 # both Intersection Street Columns are filled # 
 nyc2.1 <- filter(nyc2, 
@@ -60,20 +56,25 @@ yok_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]),
                                 "yok"))
 # find the indices for names containing "yok" inside vector unique()[new]#
 names.okay <- c(unique(nyc$City)[new_indices][york_indices],
-                unique(nyc$City)[new_indices][yok_indices] )
+                unique(nyc$City)[new_indices][yok_indices])
 # make "new" + "york" and "new" + "yok" into one vector # 
+names.okay <- names.okay[c(1,2,5,6,10,11,13,14,15,16)]
+# some are not part of New York City, subset out # 
 nyc6 <- filter(nyc5, City %in% names.okay)
 # filter data points by City column so that all names in City Column # 
 # is in names.okay vector # 
 nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
 # remove all rows where Address.Type column is "BLOCKFACE" #
 nyc7.1 <- filter(nyc7, Address.Type != "")
+# remove all rows where Address.Type column is empty # 
+nyc7.2 <- filter(nyc7.1, Address.Type != "PLACENAME")
+# remove all rows where Address.Type column is empty # 
 
-# remove all rows where Address.Type column is empty #
 
 #load intersections
 
-inter = readOGR(path.expand("~cr173/Sta523/data/nyc/intersections/"),"intersections",stringsAsFactors = FALSE)
+inter = readOGR(path.expand("~cr173/Sta523/data/nyc/intersections/"),
+                "intersections",stringsAsFactors = FALSE)
 inter = inter[!is.na(inter@data$streets),] %>%
         .[str_detect(.@data$streets,":"),] %>%
         .[!str_detect(.@data$streets,":.*:"),]
@@ -86,20 +87,15 @@ inter_data$id <- NULL
 colnames(inter_data) = c("Streets","Longitude","Latitude","Street1","Street2")
 inter_data <- inter_data %>% select(-Streets)
 
-#extract intersections data from nyc7.1 to merge with inter_data
+#extract intersections data from nyc7.2 to merge with inter_data
 
-nyc_inter1 <- nyc7.1 %>% 
-              filter(Address.Type == "INTERSECTION") %>%
-              select(Cross.Street.1,Cross.Street.2,Borough) %>%
-              filter(Borough != "Unspecified") %>%
-              filter(Cross.Street.1 != ""&Cross.Street.2 != "")
+nyc_inter1 <- nyc7.2 %>% 
+              select(Cross.Street.1,Cross.Street.2,Borough) 
 names(nyc_inter1) <- c("Street1","Street2","borough")
 
 nyc_inter2 <- nyc7.1 %>% 
-              filter(Address.Type == "INTERSECTION") %>%
-              select(Intersection.Street.1,Intersection.Street.2,Borough) %>%
-              filter(Borough != "Unspecified") %>%
-              filter(Intersection.Street.1 != "" & Intersection.Street.2 != "")
+              select(Intersection.Street.1,Intersection.Street.2,Borough)
+              
 names(nyc_inter2) <- c("Street1","Street2","borough")
 
 nyc_inter <- rbind(nyc_inter1,nyc_inter2)
@@ -107,7 +103,7 @@ nyc_inter <- rbind(nyc_inter1,nyc_inter2)
 #merge nyc_inter with inter_data
 
 transform <- function(v){
-  v <- str_replace_all(v,"AVENUE","AVE") #ATTENTION
+  v <- str_replace_all(v,"AVENUE","AVE") 
   v <- str_replace_all(v,"STREET","ST")
   v <- str_replace_all(v,"DRIVE","DR")
   v <- str_replace_all(v,"BOULEVARD","BLVD")
