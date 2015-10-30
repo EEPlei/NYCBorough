@@ -114,7 +114,7 @@ nyc_inter <- rbind(nyc_inter1,nyc_inter2)
 #merge nyc_inter with inter_data
 
 transform = function(v){
-  y = str_replace_all(str_c(v), 
+  v = str_replace_all(str_c(v), 
                      c("AVENUE"="AVE", "STREET"="ST", "DRIVE"="DR", 
                        "BOULEVARD"="BLVD", "ROAD"="RD", "PLACE"="PL", 
                        "EXPRESSWAY"="EXPY", "PARKWAY"="PKWY", 
@@ -123,7 +123,7 @@ transform = function(v){
                        "NORTH"="N ", " EAST"=" E", " WEST"=" W", 
                        " SOUTH"=" S", " NORTH"=" N"))
 }
-transform(nyc_inter$Street1)
+
 nyc_inter$Street1 <- lapply(nyc_inter$Street1, transform)
 nyc_inter$Street2 <- lapply(nyc_inter$Street2, transform)
 inter_data$Street1 <- lapply(inter_data$Street1, transform)
