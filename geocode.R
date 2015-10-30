@@ -81,8 +81,8 @@ nyc7.1 <- filter(nyc7, Address.Type != "")
 # remove all rows where Address.Type column is empty # 
 nyc7.2 <- filter(nyc7.1, Address.Type != "PLACENAME")
 # remove all rows where Address.Type column is empty # 
-set.seed(1)
-nyc7.3 <- sample_frac(nyc7.2,0.2)
+#set.seed(1)
+#nyc7.3 <- sample_frac(nyc7.2,0.5)
 
 
 #load intersections
@@ -147,7 +147,8 @@ load("/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata")
 
 nyc_pluto <- nyc7.2 %>% 
   filter(Address.Type == "ADDRESS") %>%
-  select(contains("Incident"),Borough)
+  select(contains("Incident"),Borough) %>%
+  filter(Borough != "Unspecified")
 names(nyc_pluto) <- c("ZipCode","Address","Borough")
 
 #merge nyc_pluto with pluto
