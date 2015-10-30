@@ -96,7 +96,7 @@ inter = inter[!is.na(inter@data$streets),] %>%
 inter_data = inter@data %>%
   cbind(., coordinates(inter)) %>%
   cbind(., str_split_fixed(.$streets,":",2))
-
+inter_data = inter_data %>% tbl_df
 inter_data$id <- NULL
 colnames(inter_data) = c("Streets","Longitude","Latitude","Street1","Street2")
 inter_data <- inter_data %>% select(-Streets)
