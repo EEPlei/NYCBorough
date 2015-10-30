@@ -34,27 +34,12 @@ plot(r)
 points(data1$x,data1$y,pch=16,cex=0.1)
 
 
-BK <- filter(data2, borough == "BROOKLYN")
-MH <- filter(data2, borough == "MANHATTAN")
-SI <- filter(data2, borough == "STATEN ISLAND")
-QU <- filter(data2, borough == "QUEENS")
-BX <- filter(data2, borough == "BRONX")
-
-final1 <- function(fraction, dataset){
-   a = floor((nrow(dataset) + 1) * fraction)
-   frst = rbind(dataset[0:a,], sample)
-}
-final2 <- function(fraction, dataset){
-  a = floor((nrow(dataset) + 1) * fraction)
-  scnd = rbind(dataset[a:nrow(dataset),], sample)
-}
-
 ## Create Polygons
 
 poly = rasterToPolygons(r,dissolve=TRUE)
 
 names(poly@data) = "Name"
-poly@data$Names = levels(pred)
-poly = poly[,4]
+poly@data$Name = levels(pred)
+poly = poly[-4,]
 source("write_geojson.R")
 write_geojson(poly,"boroughs.json")
