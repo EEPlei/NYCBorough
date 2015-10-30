@@ -7,7 +7,17 @@ library(foreign)
 library(data.table)
 library(RSQLite)
 
-nyc = fread("/home/vis/cr173/Sta523/data/nyc/nyc_311.csv") %>% tbl_df()
+base_path <- "~cr173/Sta523/data/nyc/"
+database <- dbConnect(drv=RSQLite::SQLite(), dbname="~cr173/Sta523/data/nyc/nyc_311_index.sqlite")
+tables <- dbListTables(database)
+lDataFrames <- vector("list", length=length(tables))
+
+## create a data.frame for each table
+for (i in seq(along=tables)) {
+  lDataFrames[[i]] <- dbGetQuery(conn=database, statement=paste("SELECT * FROM '", tables[[i]], "'", sep=""))
+}
+
+nyc <- lDataFrames[[1]] 
 nyc.important <- nyc[,c("Incident.Zip",
                         "Incident.Address",
                         "Street.Name",
@@ -18,7 +28,8 @@ nyc.important <- nyc[,c("Incident.Zip",
                         "Address.Type",
                         "City",
                         "Borough")]
-nyc1 <- filter(nyc.important, 
+nyc.na <- na.omit(nyc.important)
+nyc1 <- filter(nyc.na, 
                Cross.Street.1 != "" & Cross.Street.2 != "")
 # both Cross Street Columns are filled #
 nyc1.1 <- filter(nyc1, 
@@ -76,12 +87,12 @@ nyc7.2 <- filter(nyc7.1, Address.Type != "PLACENAME")
 inter = readOGR(path.expand("~cr173/Sta523/data/nyc/intersections/"),
                 "intersections",stringsAsFactors = FALSE)
 inter = inter[!is.na(inter@data$streets),] %>%
-        .[str_detect(.@data$streets,":"),] %>%
-        .[!str_detect(.@data$streets,":.*:"),]
+  .[str_detect(.@data$streets,":"),] %>%
+  .[!str_detect(.@data$streets,":.*:"),]
 
 inter_data = inter@data %>%
-            cbind(., coordinates(inter)) %>%
-            cbind(., str_split_fixed(.$streets,":",2))
+  cbind(., coordinates(inter)) %>%
+  cbind(., str_split_fixed(.$streets,":",2))
 
 inter_data$id <- NULL
 colnames(inter_data) = c("Streets","Longitude","Latitude","Street1","Street2")
@@ -90,51 +101,29 @@ inter_data <- inter_data %>% select(-Streets)
 #extract intersections data from nyc7.2 to merge with inter_data
 
 nyc_inter1 <- nyc7.2 %>% 
-              select(Cross.Street.1,Cross.Street.2,Borough) 
+  select(Cross.Street.1,Cross.Street.2,Borough) 
 names(nyc_inter1) <- c("Street1","Street2","borough")
 
 nyc_inter2 <- nyc7.1 %>% 
-              select(Intersection.Street.1,Intersection.Street.2,Borough)
-              
+  select(Intersection.Street.1,Intersection.Street.2,Borough)
+
 names(nyc_inter2) <- c("Street1","Street2","borough")
 
 nyc_inter <- rbind(nyc_inter1,nyc_inter2)
 
 #merge nyc_inter with inter_data
 
-transform <- function(v){
-  v <- str_replace_all(v,"AVENUE","AVE") 
-  v <- str_replace_all(v,"STREET","ST")
-  v <- str_replace_all(v,"DRIVE","DR")
-  v <- str_replace_all(v,"BOULEVARD","BLVD")
-  v <- str_replace_all(v,"ROAD","RD")
-  v <- str_replace_all(v,"PLACE","PL")
-  v <- str_replace_all(v,"EXPRESSWAY","EXPY")
-  v <- str_replace_all(v,"PARKWAY","PKWY")
-  v <- str_replace_all(v,"FREEWAY","FWY")
-  v <- str_replace_all(v,"CRESCENT","CRES")
-  v <- str_replace_all(v,"COURT","CT")
-  v <- str_replace_all(v,"LANE","LN")
-  v <- str_replace_all(v,"EAST "," E ")
-  v <- str_replace_all(v,"WEST ","W ")
-  v <- str_replace_all(v,"SOUTH ","S ")
-  v <- str_replace_all(v,"NORTH "," N ")
-  v <- str_replace_all(v,"EAST ","E ")
-  v <- str_replace_all(v,"WEST ","W ")
-  v <- str_replace_all(v,"SOUTH ","S ")
-  v <- str_replace_all(v,"NORTH ","N ")
-  v <- str_replace_all(v," EAST"," E")
-  v <- str_replace_all(v," WEST"," W")
-  v <- str_replace_all(v," SOUTH"," S")
-  v <- str_replace_all(v," NORTH"," N")
-  v <- str_replace_all(v,".* STREET WEST","WEST STREET .*")
-  return(v)
+transform = function(v){
+  y = str_replace_all(str_c(v), 
+                     c("AVENUE"="AVE", "STREET"="ST", "DRIVE"="DR", 
+                       "BOULEVARD"="BLVD", "ROAD"="RD", "PLACE"="PL", 
+                       "EXPRESSWAY"="EXPY", "PARKWAY"="PKWY", 
+                       "FREEWAY"="FWY", "CRESCENT"="CRES", "COURT"="CT",
+                       "LANE"="LN", "EAST"="E ", "WEST"="W ", "SOUTH"="S ",
+                       "NORTH"="N ", " EAST"=" E", " WEST"=" W", 
+                       " SOUTH"=" S", " NORTH"=" N"))
 }
-load("~cr173/Sta523/data/nyc/intersections/intersections.Rdata")
-
-  
-
-
+transform(nyc_inter$Street1)
 nyc_inter$Street1 <- lapply(nyc_inter$Street1, transform)
 nyc_inter$Street2 <- lapply(nyc_inter$Street2, transform)
 inter_data$Street1 <- lapply(inter_data$Street1, transform)
@@ -155,9 +144,9 @@ load("/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata")
 #extract pluto data from nyc7.1 to merge with pluto
 
 nyc_pluto <- nyc7.1 %>% 
-             filter(Address.Type == "ADDRESS") %>%
-             select(contains("Incident"),Borough) %>%
-             filter(Borough != "Unspecified")
+  filter(Address.Type == "ADDRESS") %>%
+  select(contains("Incident"),Borough) %>%
+  filter(Borough != "Unspecified")
 names(nyc_pluto) <- c("ZipCode","Address","Borough")
 
 #merge nyc_pluto with pluto
