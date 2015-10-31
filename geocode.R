@@ -8,13 +8,16 @@ library(data.table)
 library(RSQLite)
 
 base_path <- "~cr173/Sta523/data/nyc/"
-database <- dbConnect(drv=RSQLite::SQLite(), dbname="~cr173/Sta523/data/nyc/nyc_311_index.sqlite")
+database <- dbConnect(drv=RSQLite::SQLite(), 
+                      dbname="~cr173/Sta523/data/nyc/nyc_311_index.sqlite")
 tables <- dbListTables(database)
 lDataFrames <- vector("list", length=length(tables))
 
 ## create a data.frame for each table
 for (i in seq(along=tables)) {
-  lDataFrames[[i]] <- dbGetQuery(conn=database, statement=paste("SELECT * FROM '", tables[[i]], "'", sep=""))
+  lDataFrames[[i]] <- dbGetQuery(conn=database, 
+                                 statement=paste("SELECT * FROM '", 
+                                                 tables[[i]], "'", sep=""))
 }
 
 nyc <- lDataFrames[[1]] 
