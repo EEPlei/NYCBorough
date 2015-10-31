@@ -5,7 +5,21 @@ date: "October 24, 2015"
 output: html_document
 ---
 ##Geocoding##
-First obtain the data using the following code `fread() %>% tbl_df()`
+First obtain the data using the SQLite package since we have very large data, it's faster to read than fread function. Our code is as follows.
+```
+base_path <- "~cr173/Sta523/data/nyc/"
+database <- dbConnect(drv=RSQLite::SQLite(), 
+                      dbname="~cr173/Sta523/data/nyc/nyc_311_index.sqlite")
+tables <- dbListTables(database)
+lDataFrames <- vector("list", length=length(tables))
+
+## create a data.frame for each table
+for (i in seq(along=tables)) {
+  lDataFrames[[i]] <- dbGetQuery(conn=database, 
+                                 statement=paste("SELECT * FROM '", 
+                                                 tables[[i]], "'", sep=""))
+}
+```
 Since we have such a large dataset, we begin by learning some things about our data. Then, we can begin cleaning the data, so we have accurate data to work with. 
 Let's take a look at what kind of information our data tells us.     
 `colnames(nyc)`
@@ -80,7 +94,29 @@ Now we have a vector of names we can assume was meant to be New York City. We ca
 By now, we've realized that each data's location data is given to us differently. Looking at the Address.Type column, we can have some idea how the data is presented to us.     
 `> unique(nyc$Address.Type)`    
 `[1] ""  "ADDRESS" "INTERSECTION" "LATLONG" "BLOCKFACE" "PLACENAME"`     
-We only want to work with ""Address", "Intersection", and "Placename". `nyc7` and `nyc7.1` will remove all data whose Address.Type Column isn't that of the three above. 
+We only want to work with ""Address", "Intersection", and "Placename". `nyc7` and `nyc7.1` will remove all data whose Address.Type Column isn't that of the three above. Our final cleaned version of nyc data is `nyc7.2`.
+
+Now we have cleaned version of nyc data, then we load intersections data from the path `~cr173/Sta523/data/nyc/intersections/`. We read intersections shapefile through readOGR function and then selected the intersections data we want. There is no coordinated in intersections at the beginning. Then we used coordinates function to get longtitude and latitude for each record and combined it to the intersections data. We selected "Streets","Longitude","Latitude","Street1","Street2" columns from it as inter_data which could be used for combining with cleaned nyc data.
+
+Then we extracted intersections data from `nyc7.2`. We found there are two kinds of intersections columns which are Cross.Street.1/Cross.Street.2 and Intersection.Street.1/Interseciton.Street.2. When there is value in Cross.Street.1/Cross.Street.2 there would be no value in Intersection.Street.1/Interseciton.Street.2 and vice versa. So we selected both Cross.Street.1/Cross.Street.2 columns, Intersection.Street.1/Interseciton.Street.2 columns and also borough. Then we have nyc_inter1 which contained Cross.Street.1, Cross.Street.2 and borough, nyc_inter2 which contained Intersection.Street.1, Intersection.Street.2 and borough. Combined nyc_inter1 with nyc_inter2 as nyc_inter which contained Street1, Street2 and borough columns. Then we used unique filter the nyc_inter.
+
+Next step we worked on merging nyc_inter with inter_data. First we should clean both of them to make them in the same format. We found in nyc_inter data most of values were in full name while most of values were in short name in inter_data. So we need to change that. We created `transform` function which changed all full names like AVENUE, STREET, DRIVE, BOULEVARD and so on to short names accordingly. `transform` function is like this.
+```
+transform = function(v){
+  v = str_replace_all(str_c(v), 
+                      c("AVENUE"="AVE", "STREET"="ST", "DRIVE"="DR", 
+                        "BOULEVARD"="BLVD", "ROAD"="RD", "PLACE"="PL", 
+                        "EXPRESSWAY"="EXPY", "PARKWAY"="PKWY", 
+                        "FREEWAY"="FWY", "CRESCENT"="CRES", "COURT"="CT",
+                        "LANE"="LN", "EAST"="E", "WEST"="W", "SOUTH "="S",
+                        "NORTH"="N"))
+}
+```
+Then we applied transform function to both nyc_inter and inter_data. Next we merged nyc_inter and inter_data as res1 by matching Street1 and Street2 columns. Also we switched Street1 and Street2 columns to match again as res2. Combined res1 with res2 together as our final merged result, res_inter.
+
+Next we performed the similer process for pluto data. We loaded pluto data from `/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata`. And then we filterd `nyc7.2` by Address.Type == "ADDRESS" and extrated Incident.zip, Incident.address and borough columns from it as nyc_pluto. Then we merged nyc_pluto with pluto by matching "Address". Now we have two products, res_pluto and res_inter. We combined them together as "data" to plot later.
+
+
 
 ##Visualization##
 After data cleaning, our final data consists of 628,250 observations with the corresponding longitude, latitude, and borough of the reported incident. First and foremost, we wanted to make sure that wercker would recognize our column variables `long` and `lat`, which, respectively, stand for `longitude` and `latitude`. 
