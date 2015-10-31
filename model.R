@@ -18,6 +18,7 @@ names(sample) <- c("long", "lat", "borough")
 ##data below refers to the data we use for svm; colnames longitude and latitude 
 #1 latitude = 111111 meters so 200 meters is roughly = 200 * 1/111111 degree of latitude
 md200 <- 200 * 1/111111
+
 that <- sample_frac(data1, 0.4)
 #function to create fake data
 notNYC <- function(this){
