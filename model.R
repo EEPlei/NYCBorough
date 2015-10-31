@@ -22,8 +22,7 @@ data2$Borough <- as.factor(data2$Borough)
 
 l<-svm(Borough ~ .,
        data2,
-       kernel = "radial"
-)
+       kernel = "radial")
 dims = trunc(sqrt(nrow(data2))) + 1
 boundary <- sapply(data2[,-1],range)
 r = raster(nrows = dims, ncols = dims,
