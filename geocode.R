@@ -119,6 +119,9 @@ nyc_inter <- rbind(nyc_inter1,nyc_inter2)
 nyc_inter <- unique(nyc_inter)
 #merge nyc_inter with inter_data
 
+#transform function brings different stylistic notations into a single one. 
+#If AVENUE then change to AVE, if STREET change to ST and so on. 
+#A str_c command was utilized to avoid the process of running through the data multiple times. 
 transform = function(v){
   v = str_replace_all(str_c(v), 
                       c("AVENUE"="AVE", "STREET"="ST", "DRIVE"="DR", 
