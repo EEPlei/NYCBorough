@@ -81,3 +81,18 @@ By now, we've realized that each data's location data is given to us differently
 `> unique(nyc$Address.Type)`    
 `[1] ""  "ADDRESS" "INTERSECTION" "LATLONG" "BLOCKFACE" "PLACENAME"`     
 We only want to work with ""Address", "Intersection", and "Placename". `nyc7` and `nyc7.1` will remove all data whose Address.Type Column isn't that of the three above. 
+
+##Visualization##
+After data cleaning, our final data consists of 628,250 observations with the corresponding longitude, latitude, and borough of the reported incident. First and foremost, we wanted to make sure that wercker would recognize our column variables `long` and `lat`, which, respectively, stand for `longitude` and `latitude`. 
+`names(data) = c("Borough","long","lat")`    
+
+We then took a random sample of the data. `data1 <- sample_frac(data, 0.1)` 
+We conducted this random sampling based on two reasons. One, we believed that more data did not necessarily translate into better results as the location of the incident is also a random variable. That is, the location of the incident, may be within a borough or may be located on a borderline between two boroughs. This reasoning leads us to our second reasoning, where less data could exponentially reduce the running time of the svm model we utilized. Upon various levels of sensitivity analysis, we concluded not even though it may take 10 minutes to analyze 5% of the data, the increment in time does not necessarily vary linearly with the increment in percentage. That is, although it may only take 10 minutes to predict and plot 5% of the data, that does not mean that it will take 100 minutes to analyze 50% of the data. Thus, we believed that, in order to optimize performance and efficiency, we needed to take a random sample of the cleaned data. Via sensitivity analysis, we concluded that a 10% sample of the total data, performed the best and was the most efficient. 
+
+Also, we decided that generating "fake data" was crucial in the performance of our svm model. This was based on the reasoning that fake data waas needed to help svm differentiate between points that are actually in one of the boroughs in New York and points that either, 1) belonged to the various bodies of water surrounding New York City or 2) belonged to non-New York regions, such as New Jersey. Thus, through pulling off coordinates from the GoogleMap and through usage of the `runif` command to generate larger areas with non-NYC coordinates, we were able to generate approximately 48000 non-NYC coordinates. We then combined the 10% of the cleaned data with all of the non-NYC data to build `data2`. 
+`data2 <- rbind(data1,sample)` 
+
+We converted the `long` and `lat` in `data2` to a numeric variable and necessarily dropped any NAs that came up via coercion. Finally, for svm to run, we converted `data2$Borough` to be a factor variable with six levels--Bronx, Brooklyn, Manhattan, Queens, Staten Island, and notNYC. 
+
+We implemented a svm model `l<-svm(Borough ~ ., data2, kernel = "radial")`. In constructing the raster rectangle, we concluded that the automation of the contruction was necessary as we our data was a 10% sample of the original cleaned data. That is, our coordinates can differ according to the random sample r takes during each code run. Hence, we first specified a `dims` variable--namely, dimension--which takes the square root of the number of rows in `data2`, adds one to it, and throws out the decimals. Then we also specified a `boundary` variable which gives us the maximum and minimum of the `long` and `lat` variables in `data2`. As a final step, we set up the raster rectangle. We then proceed to predicting and plotting the points on our raster rectangle.
+
