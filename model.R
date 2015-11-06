@@ -10,7 +10,8 @@ data1 <- sample_frac(data, 0.04)
 
 #set the number of random samples  drawn from a raster rectangle
 N <- 20000
-sample <- data.frame(x=runif(N,-74.3,-73.67),y=runif(N,40.5,40.91))
+set.seed(1)
+sample <- data.frame(x=runif(N,-74.3,-73.7),y=runif(N,40.5,40.9))
 #create column of "N"s
 sample$NYC <- rep("N",N)
 #rename sample columns
