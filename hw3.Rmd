@@ -4,6 +4,8 @@ author: Duke Dinosaurs Team 4
 date: "October 24, 2015"
 output: html_document
 ---
+source("geocode.R")
+source("model.R")
 ##Geocoding##
 First obtain the data using the SQLite package since we have very large data, it's faster to read than fread function. Our code is as follows.
 ```
@@ -96,9 +98,9 @@ By now, we've realized that each data's location data is given to us differently
 `[1] ""  "ADDRESS" "INTERSECTION" "LATLONG" "BLOCKFACE" "PLACENAME"`     
 We only want to work with ""Address", "Intersection", and "Placename". `nyc7` and `nyc7.1` will remove all data whose Address.Type Column isn't that of the three above. Our final cleaned version of nyc data is `nyc7.2`.
 
-Now we have cleaned version of nyc data, then we load intersections data from the path `~cr173/Sta523/data/nyc/intersections/`. We read intersections shapefile through readOGR function and then selected the intersections data we want. There is no coordinated in intersections at the beginning. Then we used coordinates function to get longtitude and latitude for each record and combined it to the intersections data. We selected "Streets","Longitude","Latitude","Street1","Street2" columns from it as inter_data which could be used for combining with cleaned nyc data.
+Now we have cleaned version of nyc data, then we load intersections data from the path `~cr173/Sta523/data/nyc/intersections/`. We read intersections shapefile through readOGR function and then selected the intersections data we want. There is no coordinated in intersections at the beginning. Then we used coordinates function to get longtitude and latitude for each record and combined it to the intersections data. We selected     "Streets","Longitude","Latitude","Street1","Street2" columns from it as inter_data which could be used for combining with cleaned nyc data.
 
-Then we extracted intersections data from `nyc7.2`. We found there are two kinds of intersections columns which are Cross.Street.1/Cross.Street.2 and Intersection.Street.1/Interseciton.Street.2. When there is value in Cross.Street.1/Cross.Street.2 there would be no value in Intersection.Street.1/Interseciton.Street.2 and vice versa. So we selected both Cross.Street.1/Cross.Street.2 columns, Intersection.Street.1/Interseciton.Street.2 columns and also borough. Then we have nyc_inter1 which contained Cross.Street.1, Cross.Street.2 and borough, nyc_inter2 which contained Intersection.Street.1, Intersection.Street.2 and borough. Combined nyc_inter1 with nyc_inter2 as nyc_inter which contained Street1, Street2 and borough columns. Then we used unique filter the nyc_inter.
+Then we extracted intersections data from `nyc7.2`. We found there are two kinds of intersections columns which are Cross.Street.1/Cross.Street.2 and Intersection.Street.1/Interseciton.Street.2. When there is value in Cross.Street.1/Cross.Street.2 there would be no value in      Intersection.Street.1/Interseciton.Street.2 and vice versa. So we selected both Cross.Street.1/Cross.Street.2 columns, Intersection.Street.1/Interseciton.Street.2 columns and also borough. Then we have nyc_inter1 which contained Cross.Street.1, Cross.Street.2 and borough, nyc_inter2 which contained Intersection.Street.1, Intersection.Street.2 and borough. Combined nyc_inter1 with nyc_inter2 as nyc_inter which contained Street1, Street2 and borough columns. Then we used unique filter the nyc_inter.     
 
 Next step we worked on merging nyc_inter with inter_data. First we should clean both of them to make them in the same format. We found in nyc_inter data most of values were in full name while most of values were in short name in inter_data. So we need to change that. We created `transform` function which changed all full names like AVENUE, STREET, DRIVE, BOULEVARD and so on to short names accordingly. `transform` function is like this.
 ```
@@ -112,13 +114,13 @@ transform = function(v){
                         "NORTH"="N"))
 }
 ```
-Then we applied transform function to both nyc_inter and inter_data. Next we merged nyc_inter and inter_data as res1 by matching Street1 and Street2 columns. Also we switched Street1 and Street2 columns to match again as res2. Combined res1 with res2 together as our final merged result, res_inter.
+Then we applied transform function to both nyc_inter and inter_data. Next we merged nyc_inter and inter_data as res1 by matching Street1 and Street2 columns. Also we switched Street1 and Street2 columns to match again as res2. Combined res1 with res2 together as our final merged result, res_inter.     
 
-Next we performed the similer process for pluto data. We loaded pluto data from `/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata`. And then we filterd `nyc7.2` by Address.Type == "ADDRESS" and extrated Incident.zip, Incident.address and borough columns from it as nyc_pluto. Then we merged nyc_pluto with pluto by matching "Address". Now we have two products, res_pluto and res_inter. We combined them together as "data" to plot later.
+Next we performed the similer process for pluto data. We loaded pluto data from `/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata`. And then we filterd `nyc7.2` by Address.Type == "ADDRESS" and extrated Incident.zip, Incident.address and borough columns from it as nyc_pluto. Then we merged nyc_pluto with pluto by matching "Address". Now we have two products, res_pluto and res_inter. We combined them together as "data" to plot later.     
+   
+Our method for cleaning the data isn't perfect. A lot of information was entered incorrectly. When I attempted to clean it by only sorting out data points where the `City` column contains variations of New York City, I was able to clean out of a lot of data, but I ended up with only three boroughs instead of five. It might have been possible that only three boroughs had calls outgoing to the call center, but as shown in `boroughs.json` calls originated from all five boroughs. Not only that, but there are numerous locations where numerous calls will originate from. It is also difficult to distinguish between interior data points and exterior data points that lie on the boundary of each borough. In the next section, you can see that it will be necessary to generate Not New York City data points to make the boundaries of New York City clearer.     
 
-
-
-##Visualization##
+##Borough##
 After data cleaning, our final data consists of 628,250 observations with the corresponding longitude, latitude, and borough of the reported incident. First and foremost, we wanted to make sure that wercker would recognize our column variables `long` and `lat`, which, respectively, stand for `longitude` and `latitude`. 
 `names(data) = c("Borough","long","lat")`    
 
@@ -138,3 +140,56 @@ We converted the `long` and `lat` in `data2` to a numeric variable and necessari
 
 We implemented a svm model `l<-svm(Borough ~ ., data2, kernel = "radial")`. In constructing the raster rectangle, we concluded that the automation of the contruction was necessary as we our data was a 10% sample of the original cleaned data. That is, our coordinates can differ according to the random sample r takes during each code run. Hence, we first specified a `dims` variable--namely, dimension--which takes the square root of the number of rows in `data2`, adds one to it, and throws out the decimals. Then we also specified a `boundary` variable which gives us the maximum and minimum of the `long` and `lat` variables in `data2`. As a final step, we set up the raster rectangle. We then proceed to predicting and plotting the points on our raster rectangle.
 
+
+##Visual##   
+
+For the visual task, we chose to show how effective the call center was at handling incoming calls. For our cleaned data, there is a column called `Status` that will tell you whether a complaint is Pending, Closed, Assigned, Open, or Unassigned. Since `Status` was unimportant while we were creating `boroughs.json`, we excluded `Status` then. Now, we utilize the same method we used earlier with `Status` to merge our cleaned data with our intersection data. 
+```{r}
+nyc_interx <- nyc7.2 %>% 
+  select(Cross.Street.1,Cross.Street.2,Borough, Status)
+names(nyc_interx) <- c("Street1","Street2","borough", "Status")
+
+nyc_intery <- nyc7.2 %>% 
+  select(Intersection.Street.1,Intersection.Street.2,Borough, Status)
+
+names(nyc_intery) <- c("Street1","Street2","borough", "Status")
+
+nyc_interT <- rbind(nyc_interx,nyc_intery)
+nyc_interT <- unique(nyc_interT)
+#merge nyc_inter with inter_data
+
+nyc_interT$Street1 <- lapply(nyc_interT$Street1, transform)
+nyc_interT$Street2 <- lapply(nyc_interT$Street2, transform)
+
+stat1 <- merge(nyc_interT,inter_data)
+names(inter_data) <- c("Longitude","Latitude","Street2","Street1")
+stat2 <- merge(nyc_interT, inter_data)
+stat_inter <- rbind(stat1, stat2)
+stat_inter1 <- filter(stat_inter, Status == "Pending")
+stat_inter2 <- filter(stat_inter, Status == "Closed")
+stat_inter3 <- filter(stat_inter, Status == "Assigned")
+stat_inter4 <- filter(stat_inter, Status == "Open")
+stat_inter5 <- filter(stat_inter, Status == "Started")
+stat_inter6 <- filter(stat_inter, Status == "Unassigned")
+plot(stat_inter1$Longitude, stat_inter1$Latitude, pch = 16, cex = 0.001, col = "red")
+points(stat_inter2$Longitude, stat_inter2$Latitude, pch = 16, cex = 0.001, col = "blue")
+points(stat_inter3$Longitude, stat_inter3$Latitude, pch = 16, cex = 0.001, col = "orange")
+points(stat_inter4$Longitude, stat_inter4$Latitude, pch = 16, cex = 0.001, col = "green")
+points(stat_inter5$Longitude, stat_inter5$Latitude, pch = 16, cex = 0.001, col = "purple")
+points(stat_inter6$Longitude, stat_inter6$Latitude, pch = 16, cex = 0.001, col = "yellow")
+```
+
+If we run `nrow` on each `stat_inter` we will be able to see the following. 
+`> nrow(stat_inter1)`     
+`[1] 30764`      
+`> nrow(stat_inter2)`      
+`[1] 76826`       
+`> nrow(stat_inter3)`     
+`[1] 8940`       
+`> nrow(stat_inter4)`       
+`[1] 13554`      
+`> nrow(stat_inter5)`      
+`[1] 1262`      
+`> nrow(stat_inter6)`      
+`[1] 2`       
+From the plot we can see that the number of Closed calls dominates. The next most frequent is Pending calls. Open calls and Assigned calls are the next most frequent. Followed by Started and Unassigned. Unassigned has only two points and are essentially invisible on our plot. When plotting, we can see that after plotting Pending calls, if we add the points for Closed calls, the blue Closed calls points will completely overwhelm the red Pending calls points. However, when we add the ponts for Open, Assigned, and Unassigned, we can see them visibly appear on the map. This tells us that the majority of Closed calls are located at places where Pending calls are also located. Since, the following calls are visible, we can see that there are some locations in New York, where calls will frequently occur. These calls are easily handled as evidenced by the Closed and Pending locations. Lastly, aside from the two Unassigned points, we can say that these calls are pretty evenly distributed throughout New York City.    
