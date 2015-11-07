@@ -30,7 +30,8 @@ nyc.important <- nyc[,c("Incident.Zip",
                         "Intersection.Street.2",
                         "Address.Type",
                         "City",
-                        "Borough")]
+                        "Borough", 
+                        "Status")]
 nyc.na <- na.omit(nyc.important)
 nyc1 <- filter(nyc.na, 
                Cross.Street.1 != "" & Cross.Street.2 != "")
@@ -57,35 +58,13 @@ nyc4 <- filter(nyc3, !filter1)
 # the exact opposite of 'All four columns are empty # 
 nyc5 <- filter(nyc4, Borough != "Unspecified")
 # throw away data where the Borough information is "Unspecified" #
-#new_indices <- which(str_detect(tolower(unique(nyc$City)),
-#                               "new"))
-# unique() finds all the names that appear in the City Column # 
-# change everything to lower cases # 
-# find "new" in any of the names # 
-# find the indices for names containing "new" inside vector unique() #
-#york_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]),
-#                                "york"))
-# find the indices for names containing "york" inside vector unique()[new]#
-#yok_indices <- which(str_detect(tolower(unique(nyc$City)[new_indices]),
-#                               "yok"))
-# find the indices for names containing "yok" inside vector unique()[new]#
-#names.okay <- c(unique(nyc$City)[new_indices][york_indices],
-#               unique(nyc$City)[new_indices][yok_indices])
-# make "new" + "york" and "new" + "yok" into one vector # 
-#names.okay <- names.okay[c(1,2,5,6,10,11,13,14,15,16)]
-# some are not part of New York City, subset out # 
-#nyc6 <- filter(nyc5, City %in% names.okay)
-# filter data points by City column so that all names in City Column # 
-# is in names.okay vector # 
-#nyc7 <- filter(nyc6, Address.Type != "BLOCKFACE")
 nyc7 <- filter(nyc5, Address.Type != "BLOCKFACE")
 # remove all rows where Address.Type column is "BLOCKFACE" #
 nyc7.1 <- filter(nyc7, Address.Type != "")
 # remove all rows where Address.Type column is empty # 
 nyc7.2 <- filter(nyc7.1, Address.Type != "PLACENAME")
 # remove all rows where Address.Type column is empty # 
-#set.seed(1)
-#nyc7.3 <- sample_frac(nyc7.2,0.5)
+
 
 
 #load intersections
@@ -172,4 +151,5 @@ res_inter <- res_inter %>% select(borough, Longitude, Latitude)
 data <- rbind(res_pluto,res_inter)
 data <- unique(data)
 save(data, file = "data.Rdata")
+
 
