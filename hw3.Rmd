@@ -4,8 +4,8 @@ author: Duke Dinosaurs Team 4
 date: "October 24, 2015"
 output: html_document
 ---
-source("geocode.R")
-source("model.R")
+
+
 ##Geocoding##
 First obtain the data using the SQLite package since we have very large data, it's faster to read than fread function. Our code is as follows.
 ```
@@ -144,40 +144,6 @@ We implemented a svm model `l<-svm(Borough ~ ., data2, kernel = "radial")`. In c
 ##Visual##   
 
 For the visual task, we chose to show how effective the call center was at handling incoming calls. For our cleaned data, there is a column called `Status` that will tell you whether a complaint is Pending, Closed, Assigned, Open, or Unassigned. Since `Status` was unimportant while we were creating `boroughs.json`, we excluded `Status` then. Now, we utilize the same method we used earlier with `Status` to merge our cleaned data with our intersection data. 
-```{r}
-nyc_interx <- nyc7.2 %>% 
-  select(Cross.Street.1,Cross.Street.2,Borough, Status)
-names(nyc_interx) <- c("Street1","Street2","borough", "Status")
-
-nyc_intery <- nyc7.2 %>% 
-  select(Intersection.Street.1,Intersection.Street.2,Borough, Status)
-
-names(nyc_intery) <- c("Street1","Street2","borough", "Status")
-
-nyc_interT <- rbind(nyc_interx,nyc_intery)
-nyc_interT <- unique(nyc_interT)
-#merge nyc_inter with inter_data
-
-nyc_interT$Street1 <- lapply(nyc_interT$Street1, transform)
-nyc_interT$Street2 <- lapply(nyc_interT$Street2, transform)
-
-stat1 <- merge(nyc_interT,inter_data)
-names(inter_data) <- c("Longitude","Latitude","Street2","Street1")
-stat2 <- merge(nyc_interT, inter_data)
-stat_inter <- rbind(stat1, stat2)
-stat_inter1 <- filter(stat_inter, Status == "Pending")
-stat_inter2 <- filter(stat_inter, Status == "Closed")
-stat_inter3 <- filter(stat_inter, Status == "Assigned")
-stat_inter4 <- filter(stat_inter, Status == "Open")
-stat_inter5 <- filter(stat_inter, Status == "Started")
-stat_inter6 <- filter(stat_inter, Status == "Unassigned")
-plot(stat_inter1$Longitude, stat_inter1$Latitude, pch = 16, cex = 0.001, col = "red")
-points(stat_inter2$Longitude, stat_inter2$Latitude, pch = 16, cex = 0.001, col = "blue")
-points(stat_inter3$Longitude, stat_inter3$Latitude, pch = 16, cex = 0.001, col = "orange")
-points(stat_inter4$Longitude, stat_inter4$Latitude, pch = 16, cex = 0.001, col = "green")
-points(stat_inter5$Longitude, stat_inter5$Latitude, pch = 16, cex = 0.001, col = "purple")
-points(stat_inter6$Longitude, stat_inter6$Latitude, pch = 16, cex = 0.001, col = "yellow")
-```
 
 If we run `nrow` on each `stat_inter` we will be able to see the following. 
 `> nrow(stat_inter1)`     

@@ -127,7 +127,7 @@ save(res_inter, file = "res_inter.Rdata")
 
 load("/home/vis/cr173/Sta523/data/nyc/pluto/pluto.Rdata")
 
-
+#Visual#
 #extract pluto data from nyc7.1 to merge with pluto
 
 nyc_pluto <- nyc7.2 %>% 
@@ -152,4 +152,35 @@ data <- rbind(res_pluto,res_inter)
 data <- unique(data)
 save(data, file = "data.Rdata")
 
+nyc_interx <- nyc7.2 %>% 
+  select(Cross.Street.1,Cross.Street.2,Borough, Status)
+names(nyc_interx) <- c("Street1","Street2","borough", "Status")
 
+nyc_intery <- nyc7.2 %>% 
+  select(Intersection.Street.1,Intersection.Street.2,Borough, Status)
+
+names(nyc_intery) <- c("Street1","Street2","borough", "Status")
+
+nyc_interT <- rbind(nyc_interx,nyc_intery)
+nyc_interT <- unique(nyc_interT)
+#merge nyc_inter with inter_data
+
+nyc_interT$Street1 <- lapply(nyc_interT$Street1, transform)
+nyc_interT$Street2 <- lapply(nyc_interT$Street2, transform)
+
+stat1 <- merge(nyc_interT,inter_data)
+names(inter_data) <- c("Longitude","Latitude","Street2","Street1")
+stat2 <- merge(nyc_interT, inter_data)
+stat_inter <- rbind(stat1, stat2)
+stat_inter1 <- filter(stat_inter, Status == "Pending")
+stat_inter2 <- filter(stat_inter, Status == "Closed")
+stat_inter3 <- filter(stat_inter, Status == "Assigned")
+stat_inter4 <- filter(stat_inter, Status == "Open")
+stat_inter5 <- filter(stat_inter, Status == "Started")
+stat_inter6 <- filter(stat_inter, Status == "Unassigned")
+plot(stat_inter1$Longitude, stat_inter1$Latitude, pch = 16, cex = 0.001, col = "red")
+points(stat_inter2$Longitude, stat_inter2$Latitude, pch = 16, cex = 0.001, col = "blue")
+points(stat_inter3$Longitude, stat_inter3$Latitude, pch = 16, cex = 0.001, col = "orange")
+points(stat_inter4$Longitude, stat_inter4$Latitude, pch = 16, cex = 0.001, col = "green")
+points(stat_inter5$Longitude, stat_inter5$Latitude, pch = 16, cex = 0.001, col = "purple")
+points(stat_inter6$Longitude, stat_inter6$Latitude, pch = 16, cex = 0.001, col = "yellow")
